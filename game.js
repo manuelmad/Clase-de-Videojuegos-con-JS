@@ -9,7 +9,9 @@ var btnRight = document.querySelector('#right');
 var btnDown = document.querySelector('#down');
 const spanLives = document.querySelector('#lives');
 const spanTime = document.querySelector('#time');
-const new_record = document.querySelector('#new_record');
+const spanRecord = document.querySelector('#record');
+const pResult = document.querySelector('#result');
+//const new_record = document.querySelector('#new_record');
 
 
 let canvasSize;
@@ -19,7 +21,7 @@ let lives = 3;
 
 let timeStart;
 let timePlayer;
-let puntuacion;
+// let puntuacion;
 let timeInterval;
 
 
@@ -43,17 +45,29 @@ window.addEventListener('resize', setCanvasSize);
 
 function setCanvasSize() {
     if(window.innerHeight > window.innerWidth) {
-        canvasSize = window.innerWidth * 0.8;
+        canvasSize = window.innerWidth * 0.7;
     }
     else {
-        canvasSize = window.innerHeight * 0.8;
+        canvasSize = window.innerHeight * 0.7;
     }
 
     canvas.setAttribute('width', canvasSize);
     canvas.setAttribute('height', canvasSize);
 
     elementsSize = canvasSize/10;
- 
+    
+    if(canvasSize == canvasSize1) {
+        playerPosition.x = ultima_x;
+        playerPosition.y = ultima_y;
+    }
+    else {
+        playerPosition.x = ultima_x*(canvasSize/canvasSize1);
+        playerPosition.y = ultima_y*(canvasSize/canvasSize1);
+    }
+    // playerPosition.x = undefined;
+    // playerPosition.y = undefined;
+
+
     startGame();
 }
 
@@ -66,23 +80,24 @@ function startGame() {
 
     if(!map) {
         gameWin();
-        timePlayer = Number(spanTime.innerHTML);
-        puntuacion = Number(localStorage.getItem('Record'));
-        if(!puntuacion) {
-            localStorage.setItem('Record', timePlayer);
-        }
-        else {
-            if(timePlayer < puntuacion) {
-                new_record.innerHTML = 'Has conseguido un nuevo record!!!';
-                localStorage.setItem('Record', timePlayer);
-            }
-        }
+        // timePlayer = Number(spanTime.innerHTML);
+        // puntuacion = Number(localStorage.getItem('Record'));
+        // if(!puntuacion) {
+        //     localStorage.setItem('Record', timePlayer);
+        // }
+        // else {
+        //     if(timePlayer < puntuacion) {
+        //         new_record.innerHTML = 'Has conseguido un nuevo record!!!';
+        //         localStorage.setItem('Record', timePlayer);
+        //     }
+        // }
         return;
     }
 
     if(!timeStart) {
         timeStart = Date.now();
         timeInterval = setInterval(showTime, 100);
+        showRecord();
     }
 
     const mapRows = map.trim().split('\n');
@@ -140,6 +155,9 @@ function startGame() {
     // }
 }
 
+let ultima_x;
+let ultima_y;
+let canvasSize1;
 
 function movePlayer() {
     if(playerPosition.x.toFixed(3) == giftPosition.x.toFixed(3) && playerPosition.y.toFixed(3) == giftPosition.y.toFixed(3)) {
@@ -164,6 +182,15 @@ function movePlayer() {
    
     game.fillText(emojis['PLAYER'], playerPosition.x, playerPosition.y);
     
+    ultima_x = playerPosition.x;
+    ultima_y = playerPosition.y;
+
+    if(window.innerHeight > window.innerWidth) {
+        canvasSize1 = window.innerWidth * 0.7;
+    }
+    else {
+        canvasSize1 = window.innerHeight * 0.7;
+    }
 }
 
 function levelWin() {
@@ -178,10 +205,24 @@ function levelWin() {
 function gameWin() {
     console.log("Terminaste el juego!!!");
     clearInterval(timeInterval);
-}
 
-function recordSave() {
+    const recordTime = localStorage.getItem('record_time');
+    const playerTime = Date.now() - timeStart;
+    if(recordTime) {
+        if(recordTime >= playerTime) {
+            localStorage.setItem('record_time', playerTime);
+            console.log('Superaste el record!');
+        }
+        else {
+            console.log('Lo siento, no superaste el record! :(');
+        }
+    }
+    else {
+        localStorage.setItem('record_time', playerTime);
+        console.log('Es tu primera partida. Ahora intenta superar tu tiempo.');
+    }
 
+    console.log(recordTime, playerTime);
 }
 
 function showLives() {
@@ -204,6 +245,10 @@ function showLives() {
 
 function showTime() {
     spanTime.innerHTML = Date.now() - timeStart;
+}
+
+function showRecord() {
+    spanRecord.innerHTML = localStorage.getItem('record_time');
 }
 
 function levelLost() {
