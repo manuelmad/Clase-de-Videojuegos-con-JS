@@ -12,8 +12,9 @@ const spanTime = document.querySelector('#time');
 const spanRecord = document.querySelector('#record');
 const pResult = document.querySelector('#result');
 //const new_record = document.querySelector('#new_record');
+const reset_button = document.querySelector('#reset_button');
 
-
+//localStorage.removeItem('record_time');
 let canvasSize;
 let elementsSize;
 let level = 0;
@@ -177,7 +178,15 @@ function movePlayer() {
       
       if (enemyCollision) {
         console.log('Chocaste contra un enemigo :(');
-        levelLost();
+        if(lives > 0) {
+            showCollision();
+            setTimeout(levelLost, 3000);
+        }
+        else {
+            showDeath();
+        }
+        
+        //levelLost();
       }
    
     game.fillText(emojis['PLAYER'], playerPosition.x, playerPosition.y);
@@ -191,6 +200,20 @@ function movePlayer() {
     else {
         canvasSize1 = window.innerHeight * 0.7;
     }
+}
+
+function showCollision() {
+    game.clearRect(0, 0, canvasSize, canvasSize);
+    game.font = '5px';
+    game.textAlign = 'center';
+    game.fillText('PERDISTE UNA VIDA, VUELVE A INTENTARLO', canvasSize/2, canvasSize/2);
+}
+
+function showDeath() {
+    game.clearRect(0, 0, canvasSize, canvasSize);
+    game.font = '5px';
+    game.textAlign = 'center';
+    game.fillText('PERDISTE TODAS LAS VIDAS, VUELVE AL INICIO', canvasSize/2, canvasSize/2);
 }
 
 function levelWin() {
@@ -212,6 +235,7 @@ function gameWin() {
         if(recordTime >= playerTime) {
             localStorage.setItem('record_time', playerTime);
             console.log('Superaste el record!');
+            pResult.innerHTML = 'Superaste el record!';
         }
         else {
             console.log('Lo siento, no superaste el record! :(');
@@ -220,6 +244,7 @@ function gameWin() {
     else {
         localStorage.setItem('record_time', playerTime);
         console.log('Es tu primera partida. Ahora intenta superar tu tiempo.');
+        pResult.innerHTML = 'Es tu primera partida. Ahora intenta superar tu tiempo.';
     }
 
     console.log(recordTime, playerTime);
@@ -255,6 +280,7 @@ function levelLost() {
     lives--;
 
     console.log(lives);
+
     if(lives <= 0) {
         lives = 3;
         level = 0;
@@ -286,6 +312,12 @@ function moveByKeys(event) {
     else if(event.key == 'ArrowDown') {
         moveDown();
     }
+}
+
+reset_button.addEventListener('click', resetGame);
+
+function resetGame() {
+    location.reload();
 }
 
 
