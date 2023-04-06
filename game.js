@@ -1,20 +1,18 @@
-//console.log(maps);
-
+// Variables para acceder a los elementos del DOM
 const canvas = document.querySelector('#game');
 const game = canvas.getContext('2d');
 
-var btnUp = document.querySelector('#up');
-var btnLeft = document.querySelector('#left');
-var btnRight = document.querySelector('#right');
-var btnDown = document.querySelector('#down');
+let btnUp = document.querySelector('#up');
+let btnLeft = document.querySelector('#left');
+let btnRight = document.querySelector('#right');
+let btnDown = document.querySelector('#down');
 const spanLives = document.querySelector('#lives');
 const spanTime = document.querySelector('#time');
 const spanRecord = document.querySelector('#record');
 const pResult = document.querySelector('#result');
-//const new_record = document.querySelector('#new_record');
+const delete_record_button = document.querySelector('#delete_record');
 const reset_button = document.querySelector('#reset_button');
 
-//localStorage.removeItem('record_time');
 let canvasSize;
 let elementsSize;
 let level = 0;
@@ -22,9 +20,10 @@ let lives = 3;
 
 let timeStart;
 let timePlayer;
-// let puntuacion;
+
 let timeInterval;
 
+let moves = 0;
 
 const playerPosition = {
     x: undefined,
@@ -36,10 +35,7 @@ const giftPosition = {
     y: undefined,
 }
 
-//var bombas = [];
-
 let enemiesPositions = [];
-
 
 window.addEventListener('load', setCanvasSize);
 window.addEventListener('resize', setCanvasSize);
@@ -65,9 +61,6 @@ function setCanvasSize() {
         playerPosition.x = ultima_x*(canvasSize/canvasSize1);
         playerPosition.y = ultima_y*(canvasSize/canvasSize1);
     }
-    // playerPosition.x = undefined;
-    // playerPosition.y = undefined;
-
 
     startGame();
 }
@@ -77,37 +70,22 @@ function startGame() {
     game.textAlign = 'right';
     
     const map = maps[level];
-    //console.log(map);
 
     if(!map) {
         gameWin();
-        // timePlayer = Number(spanTime.innerHTML);
-        // puntuacion = Number(localStorage.getItem('Record'));
-        // if(!puntuacion) {
-        //     localStorage.setItem('Record', timePlayer);
-        // }
-        // else {
-        //     if(timePlayer < puntuacion) {
-        //         new_record.innerHTML = 'Has conseguido un nuevo record!!!';
-        //         localStorage.setItem('Record', timePlayer);
-        //     }
-        // }
         return;
     }
 
-    if(!timeStart) {
+    if(!timeStart && moves != 0) {
         timeStart = Date.now();
         timeInterval = setInterval(showTime, 100);
         showRecord();
     }
 
     const mapRows = map.trim().split('\n');
-    //console.log(mapRows);
 
     const mapRowsCols = mapRows.map(row => row.trim().split(''));
-    //console.log(mapRowsCols);
 
-    //console.log(mapRowsCols[0][0]);
     showLives();
 
     game.clearRect(0, 0, canvasSize, canvasSize);
@@ -119,21 +97,17 @@ function startGame() {
             const posX = elementsSize * (colI + 1);
             const posY = elementsSize * (rowI + 1);
             game.fillText(emoji, posX, posY);
-            //console.log({row, col, rowI, colI});
+            
             if(col == 'O') {
                 if(!playerPosition.x && !playerPosition.y) {
                    playerPosition.x = posX;
                    playerPosition.y = posY;
-                   //console.log(playerPosition.x, playerPosition.y);
                 }
             }
             else if (col == 'I') {
                 giftPosition.x = posX;
                 giftPosition.y = posY;
             }
-            // else if (col == 'X') {
-            //     bombas.push(posX, posY);
-            // }
             else if (col == 'X') {
             enemiesPositions.push({
                 x: posX,
@@ -143,17 +117,14 @@ function startGame() {
         });
     });
 
+    // const player_img = new Image();
+    // player_img.src = './player.png';
+    // player_img.setAttribute('width', elementsSize);
+    // player_img.setAttribute('height', elementsSize);
+    
+    // game.drawImage(player_img, playerPosition.x, playerPosition.y);
 
     movePlayer();
-
-    
-    
-    
-    // for(j=1; j<=10; j++) {
-    //     for(i=1; i <= 10; i++) {
-    //         game.fillText(emojis[mapRowsCols[j-1][i-1]], elementsSize*i, elementsSize*j);
-    //     }
-    // }
 }
 
 let ultima_x;
@@ -162,14 +133,11 @@ let canvasSize1;
 
 function movePlayer() {
     if(playerPosition.x.toFixed(3) == giftPosition.x.toFixed(3) && playerPosition.y.toFixed(3) == giftPosition.y.toFixed(3)) {
-        //console.log("Pasaste de nivel!!!");
         levelWin();
     }
-    // for(i=0; i < bombas.length; i=i+2) {
-    //     if(bombas[i].toFixed(3) == playerPosition.x.toFixed(3) && bombas[i+1].toFixed(3) == playerPosition.y.toFixed(3)) {
-    //         console.log("Explosión!!!");
-    //     }
-    // }
+    game.fillText(emojis['PLAYER'], playerPosition.x, playerPosition.y);
+
+
     const enemyCollision = enemiesPositions.find(enemy => {
         const enemyCollisionX = enemy.x.toFixed(3) == playerPosition.x.toFixed(3);
         const enemyCollisionY = enemy.y.toFixed(3) == playerPosition.y.toFixed(3);
@@ -178,18 +146,19 @@ function movePlayer() {
       
       if (enemyCollision) {
         console.log('Chocaste contra un enemigo :(');
-        if(lives > 0) {
-            showCollision();
+        if(lives > 1) {
+            game.clearRect(0, 0, canvasSize, canvasSize);
+            game.fillText(emojis['BOMB_COLLISION'], playerPosition.x, playerPosition.y);
+            setTimeout(showCollision, 1000);
             setTimeout(levelLost, 3000);
         }
         else {
             showDeath();
+            clearInterval(timeInterval);
+            spanTime.innerHTML = '';
+            setTimeout(levelLost, 3000);
         }
-        
-        //levelLost();
       }
-   
-    game.fillText(emojis['PLAYER'], playerPosition.x, playerPosition.y);
     
     ultima_x = playerPosition.x;
     ultima_y = playerPosition.y;
@@ -204,14 +173,22 @@ function movePlayer() {
 
 function showCollision() {
     game.clearRect(0, 0, canvasSize, canvasSize);
-    game.font = '5px';
+    if(canvasSize < 300) {
+        game.font = '8px Verdana';
+    } else {
+        game.font = '15px Verdana';
+    }
     game.textAlign = 'center';
     game.fillText('PERDISTE UNA VIDA, VUELVE A INTENTARLO', canvasSize/2, canvasSize/2);
 }
 
 function showDeath() {
     game.clearRect(0, 0, canvasSize, canvasSize);
-    game.font = '5px';
+    if(canvasSize < 300) {
+        game.font = '8px Verdana';
+    } else {
+        game.font = '15px Verdana';
+    }
     game.textAlign = 'center';
     game.fillText('PERDISTE TODAS LAS VIDAS, VUELVE AL INICIO', canvasSize/2, canvasSize/2);
 }
@@ -222,22 +199,20 @@ function levelWin() {
     startGame();
 }
 
-//localStorage.setItem('Record' + j, 7);
-//localStorage.removeItem('Record0');
-
 function gameWin() {
     console.log("Terminaste el juego!!!");
     clearInterval(timeInterval);
 
     const recordTime = localStorage.getItem('record_time');
-    const playerTime = Date.now() - timeStart;
+    const playerTime = ((Date.now() - timeStart)/1000).toFixed(3);
     if(recordTime) {
         if(recordTime >= playerTime) {
             localStorage.setItem('record_time', playerTime);
             console.log('Superaste el record!');
-            pResult.innerHTML = 'Superaste el record!';
+            pResult.innerHTML = `¡Felicidades, has superado el juego y además superaste el record de ${recordTime} segundos! Tu nuevo record es de ${playerTime} segundos`;
         }
         else {
+            pResult.innerHTML = `¡Felicidades! Has superado el juego, pero no superaste el record, vuelve a intentarlo`;
             console.log('Lo siento, no superaste el record! :(');
         }
     }
@@ -252,24 +227,18 @@ function gameWin() {
 
 function showLives() {
     const heartsArray = Array(lives).fill(emojis['PLAYER']);
-    console.log(heartsArray);
 
     spanLives.innerHTML = "";
 
-    // var i = lives;
-    // while(i>0) {
-    //     spanLives.append(heartsArray[i-1]);
-    //     i--;
-    // }
-
-    // for(i=lives; i > 0; i--) {
-    //     spanLives.append(heartsArray[i-1]);
-    // }
     heartsArray.forEach(heart => spanLives.append(heart));
 }
 
 function showTime() {
-    spanTime.innerHTML = Date.now() - timeStart;
+    if(timeStart) {
+        spanTime.innerHTML = ((Date.now() - timeStart)/1000).toFixed(1);
+    } else {
+        spanTime.innerHTML = '';
+    }
 }
 
 function showRecord() {
@@ -285,6 +254,7 @@ function levelLost() {
         lives = 3;
         level = 0;
         timeStart = undefined;
+        moves = 0;
     }
 
     playerPosition.x = undefined;
@@ -314,16 +284,11 @@ function moveByKeys(event) {
     }
 }
 
-reset_button.addEventListener('click', resetGame);
-
-function resetGame() {
-    location.reload();
-}
-
-
 function moveUp() {
-    if(playerPosition.y - elementsSize > elementsSize) {
+    if(playerPosition.y - elementsSize > elementsSize-10) {
         playerPosition.y = playerPosition.y - elementsSize;
+        moves++;
+        console.log(moves);
         startGame();
     }
     console.log("arriba");
@@ -331,8 +296,10 @@ function moveUp() {
 }
 
 function moveLeft() {
-    if(playerPosition.x - elementsSize > elementsSize) {
+    if(playerPosition.x - elementsSize > elementsSize-10) {
         playerPosition.x = playerPosition.x - elementsSize;
+        moves++;
+        console.log(moves);
         startGame();
     }
     console.log("izquierda");
@@ -341,6 +308,8 @@ function moveLeft() {
 function moveRight() {
     if(playerPosition.x + elementsSize <= canvasSize) {
         playerPosition.x = playerPosition.x + elementsSize;
+        moves++;
+        console.log(moves);
         startGame();
     }
     console.log("derecha");
@@ -349,8 +318,25 @@ function moveRight() {
 function moveDown() {
     if(playerPosition.y + elementsSize <= canvasSize) {
         playerPosition.y = playerPosition.y + elementsSize;
+        moves++;
+        console.log(moves);
         startGame();
     }
-
     console.log("abajo");
+}
+
+
+// Evento para reiniciar el juego desde el primer nivel
+reset_button.addEventListener('click', resetGame);
+
+function resetGame() {
+    location.reload();
+}
+
+// Evento para borrar el record del localStorage y reiniciar el juego
+delete_record_button.addEventListener('click', deleteRecord);
+
+function deleteRecord() {
+    localStorage.removeItem('record_time');
+    resetGame();
 }

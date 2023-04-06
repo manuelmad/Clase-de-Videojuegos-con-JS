@@ -2,14 +2,13 @@
  * Reglas:
  * El final de cada nivel debe ser el inicio del siguiente
 */
-
 const emojis = {
     '-': ' ',
     'O': '🚪',
-    'X': 'B',
-    'I': 'g',
-    'PLAYER': '❤️',
-    'BOMB_COLLISION': 'ðŸ”¥',
+    'X': '💣',
+    'I': '🏁',
+    'PLAYER': '💀',
+    'BOMB_COLLISION': '💥',
     'GAME_OVER': 'ðŸ‘Ž',
     'WIN': 'ðŸ†',
   };
